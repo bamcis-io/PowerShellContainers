@@ -1,0 +1,39 @@
+FROM debian:latest
+
+LABEL maintainer="Michael Haken <michael.haken@outlook.com>"
+
+ARG VERSION="6.0.2"
+
+ENV DEBIAN_FRONTEND="noninteractive"
+
+RUN apt-get update \
+    && apt-get -y dist-upgrade \
+    && apt-get -y autoremove \
+    && apt-get install --assume-yes curl gnupg apt-transport-https \
+
+    # Import the public repository GPG keys
+    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+
+    # Register the Microsoft Product feed
+    && OS_NAME=$(cat /etc/os-release | grep -e "VERSION=.*" | cut -d "(" -f 2 | cut -d ")" -f 1) \
+    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-${OS_NAME}-prod ${OS_NAME} main" > \
+        /etc/apt/sources.list.d/microsoft.list \
+
+    # Update the list of products
+    && apt-get update \
+
+    # Install PowerShell
+    && OS_MAJOR_VERSION=$(cat /etc/*version | cut -c 1) \
+    && apt-get install -y powershell=${VERSION}-1.debian.${OS_MAJOR_VERSION} \
+    && pwsh -Command "$PSVersionTable" \
+
+    # Cleanup system components
+    && apt-get remove --assume-yes curl gnupg apt-transport-https \
+	&& apt-get autoclean -y \
+	&& apt-get autoremove -y \
+	&& apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/* 
+
+SHELL ["pwsh", "-Command"]
+
+ENTRYPOINT ["pwsh"]

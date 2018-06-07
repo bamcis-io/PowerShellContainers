@@ -1,0 +1,8 @@
+version: '3.6'
+
+services:
+  pwsh:
+    image: bamcis/powershell-debian:latest
+    container_name: pwsh
+    stdin_open: true
+    tty: true
